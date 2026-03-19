@@ -77,7 +77,7 @@ using these factors:
 - **Dissolved Oxygen** — depends on aeration capacity vs. biomass
 - **Stocking Density** — lower density = less stress = bigger fish
 - **Water Quality** — biofilter TAN removal capacity vs. ammonia production
-- **Turnover Rate** — pump flow / tank volume, optimal 1-2x/hour
+- **Turnover Rate** — pump flow / tank volume, optimal 2.5-4.0x/hour (>4.0 penalized to 0.95)
 
 Each factor multiplies the base Specific Growth Rate (SGR). The product
 determines daily weight gain. Small improvements compound over 165 days.
@@ -103,7 +103,8 @@ Think about these when proposing changes:
    fit within structure and maintain gravity cascade.
 
 6. **Pump sizing** — Better turnover rate improves water mixing and quality
-   distribution. Optimal is 1-2 turnovers/hour.
+   distribution. Optimal is 2.5-4.0 turnovers/hour. Above 4.0 is penalized (f_turn=0.95).
+   Formula: turnovers/hr = pump_flow_lpm × 60 / tank_volume_l.
 
 7. **Stand height** — Affects hydraulic grade line. Higher stand = more gravity
    head for biofilter cascade, but pump must push water higher.
@@ -189,3 +190,22 @@ LOOP FOREVER:
 - TAN production: ~30g per kg feed consumed
 - Feed rate: 1.5-5% body weight/day depending on fish size
 - The growth factors multiply — improving multiple factors compounds gains
+
+## Model-to-reality translation (1-tank scoring model → 3-tank real system)
+
+The scoring model simulates a **single tank** for speed. The real Barbosa system
+has **3× 500L Tankplast tanks** sharing one pump/biofilter/sump. When the AI
+optimizes per-tank parameters, here's how they map to the real system:
+
+| Scoring Model (1-tank) | Real System (3-tank) | Translation Rule |
+|-------------------------|----------------------|------------------|
+| `tank_volume_l = 500` | 3× 500L = 1,500L total | Do NOT set `tank_volume_l = 1500` — the DO model breaks. Keep at 500 (per-tank). |
+| `stocking_count = 20` | 60 fish total (20/tank) | Multiply by 3 for purchasing/stocking. |
+| `pump_flow_lpm = 30` | 30 LPM total, split 3 ways (~10 LPM/tank) | LEO ACm75 serves all 3 tanks via manifold header. |
+| `bio_barrel_count = 3` | Same — 3 barrels serve all 3 tanks | Biofilter sized for total system bioload (3× single-tank). |
+| `air_pump_flow_lpm = 80` | 80 LPM split across 3 tanks + biofilter | 6 airstones total: 1 per tank + 3 in barrels. |
+| `turnovers/hr = 3.6` | Per-tank metric — each tank turns over 3.6×/hr | Validate via flow balancing valves on supply drops. |
+
+**Key constraint the AI must respect:** The scoring model's `pump_flow_lpm` is the
+total system flow (not per-tank). The LEO ACm75 at 30 LPM operating point is already
+running at minimum rated flow — don't go lower.

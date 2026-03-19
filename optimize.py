@@ -75,8 +75,18 @@ def git_commit(message):
 
 
 def git_reset_last():
-    """Revert the last commit (discard failed experiment)."""
-    run_cmd("git reset --hard HEAD~1")
+    """Revert the last commit (discard failed experiment).
+    Falls back to restoring just design.py if HEAD~1 doesn't exist
+    (e.g., only one commit in the repo).
+    """
+    rc, _, _ = run_cmd("git rev-parse --verify HEAD~1")
+    if rc == 0:
+        run_cmd("git reset --hard HEAD~1")
+    else:
+        # Only 1 commit exists — can't reset further.
+        # Restore design.py from HEAD (undo uncommitted changes at minimum).
+        print("  WARNING: Cannot reset HEAD~1 (only 1 commit). Restoring design.py from HEAD.")
+        run_cmd(f"git checkout HEAD -- {DESIGN_FILE}")
 
 
 def init_results_tsv():
@@ -243,6 +253,13 @@ def run_one_experiment(dry_run=False):
     print(f"\n{'='*60}")
     print(f"  AUTOAQUAPONICS -- Experiment starting...")
     print(f"{'='*60}\n")
+
+    # Safety check: if design.py has uncommitted changes from a crashed prior run,
+    # restore the committed version before starting a new experiment.
+    rc, diff_out, _ = run_cmd(f"git diff --name-only {DESIGN_FILE}")
+    if rc == 0 and DESIGN_FILE in (diff_out or ""):
+        print("  WARNING: design.py has uncommitted changes (leftover from crash?). Restoring from HEAD.")
+        run_cmd(f"git checkout HEAD -- {DESIGN_FILE}")
 
     init_results_tsv()
 

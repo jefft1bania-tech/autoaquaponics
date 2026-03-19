@@ -55,12 +55,27 @@ jobs:
           fi
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
+      - name: Restore experiment history from prior runs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: run-log-*
+          merge-multiple: true
+        continue-on-error: true  # First run won't have artifacts
+
       - name: Run optimization
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           MAX="${{ github.event.inputs.max_experiments || '3' }}"
           python optimize.py --max-experiments "$MAX"
+
+      - name: Commit experiment history
+        run: |
+          # Stage experiment history files (now tracked, not gitignored)
+          git add results.tsv run.log 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update experiment history (results.tsv + run.log)"
+          fi
 
       - name: Push results
         run: |

@@ -5,8 +5,7 @@ dist/
 build/
 .venv/
 venv/
-run.log
-results.tsv
+# run.log and results.tsv are now TRACKED to preserve experiment history across Actions runs
 output.step
 *.step
 .env

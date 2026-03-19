@@ -73,8 +73,8 @@ SUMP_CY = 1529.0
 SUMP_INLET_Z = 200.0                # mm above grade
 
 # Water Pump
-PUMP_FLOW_LPM = 25.0                 # L/min at operating TDH (reduced for optimal 2.5-4 turnovers/hr)
-PUMP_POWER_W = 180                   # watts (smaller pump matched to flow)
+PUMP_FLOW_LPM = 30.0                 # L/min at operating TDH (LEO ACm75 minimum rated flow; gives 3.6 t/hr = f_turn 1.0)
+PUMP_POWER_W = 550                   # watts (LEO ACm75 at operating point, 0.75kW rated)
 PUMP_W = 250.0                       # mm body width
 PUMP_D = 180.0                       # mm body depth
 PUMP_H = 200.0                       # mm body height
@@ -82,8 +82,8 @@ PUMP_CX = 5475.0
 PUMP_CY = 907.0
 
 # Air Pump + Aeration
-AIR_PUMP_FLOW_LPM = 60              # L/min output
-AIR_PUMP_POWER_W = 40                # watts
+AIR_PUMP_FLOW_LPM = 80              # L/min output (upgraded for 450g DO budget)
+AIR_PUMP_POWER_W = 60                # watts (80 LPM diaphragm pump)
 AIR_PUMP_W = 200.0
 AIR_PUMP_D = 150.0
 AIR_PUMP_H = 150.0
@@ -94,7 +94,7 @@ AIR_PUMP_Z = 200.0                   # mm mounted height
 # Temperature management
 AMBIENT_TEMP_C = 23.0                # Barbosa average air temp at 1300m ASL
 GREENHOUSE_BOOST_C = 4.0             # greenhouse effect on WATER temp
-INSULATION_BOOST_C = 2.0             # tank insulation
+INSULATION_BOOST_C = 0.5             # tank insulation (bubble wrap on HDPE — realistic value)
 DARK_TANK_BOOST_C = 0.3              # black HDPE solar absorption (minimal baseline)
 
 # Pipe dimensions (OD in mm, for CAD rendering)
