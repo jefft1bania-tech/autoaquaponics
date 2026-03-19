@@ -42,11 +42,11 @@ FISH_TANK_CX = 3251.0              # X center position (mm)
 FISH_TANK_CY = 1270.0              # Y center position (mm)
 
 # Stocking
-STOCKING_COUNT = 16                 # fingerlings stocked in tank (reduced from 18)
+STOCKING_COUNT = 14                 # fingerlings stocked in tank (reduced from 16)
 GROW_OUT_DAYS = 165                 # 5.5 months
 
 # Biofilter — MBBR barrels in series
-BIO_BARREL_COUNT = 3                # number of 55-gal MBBR barrels
+BIO_BARREL_COUNT = 4                # number of 55-gal MBBR barrels (increased from 3)
 BIO_DIA = 585.0                     # mm barrel outer diameter
 BIO_H = 880.0                       # mm barrel height
 BIO_WALL = 4.0                      # mm barrel wall thickness
@@ -82,8 +82,8 @@ PUMP_CX = 5475.0
 PUMP_CY = 907.0
 
 # Air Pump + Aeration
-AIR_PUMP_FLOW_LPM = 80              # L/min output (upgraded for 450g DO budget)
-AIR_PUMP_POWER_W = 60                # watts (80 LPM diaphragm pump)
+AIR_PUMP_FLOW_LPM = 90              # L/min output (increased from 80 for better DO)
+AIR_PUMP_POWER_W = 75                # watts (90 LPM diaphragm pump)
 AIR_PUMP_W = 200.0
 AIR_PUMP_D = 150.0
 AIR_PUMP_H = 150.0
@@ -355,6 +355,8 @@ bio_cxs = [BIO1_CX + i * BIO_SPACING for i in range(BIO_BARREL_COUNT)]
 # Adjust if more than 3 barrels
 if BIO_BARREL_COUNT <= 3:
     bio_cxs = [BIO1_CX, BIO2_CX, BIO3_CX][:BIO_BARREL_COUNT]
+elif BIO_BARREL_COUNT == 4:
+    bio_cxs = [BIO1_CX, BIO2_CX, BIO3_CX, BIO3_CX + BIO_SPACING]
 bio_platform_l = (bio_cxs[-1] - bio_cxs[0] + BIO_DIA + 200) if len(bio_cxs) > 1 else BIO_DIA + 200
 bio_platform_cx = (bio_cxs[0] + bio_cxs[-1]) / 2 if len(bio_cxs) > 1 else bio_cxs[0]
 
