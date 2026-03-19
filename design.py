@@ -32,7 +32,7 @@ NORTH_POST_H = 9 * 304.8           # 2743.2mm
 
 # Fish Tank — round HDPE cylindrical
 FISH_TANK_DIA = 1200.0              # mm (increased from 1117.6mm)
-FISH_TANK_H = 762.0                 # mm (30" = 2.5ft)
+FISH_TANK_H = 900.0                 # mm (increased from 762mm for more volume)
 FISH_TANK_WALL = 6.0                # mm wall thickness
 FISH_TANK_STAND_H = 450.0           # mm steel tube stand height
 FISH_TANK_VOLUME_L = round(
@@ -42,7 +42,7 @@ FISH_TANK_CX = 3251.0              # X center position (mm)
 FISH_TANK_CY = 1270.0              # Y center position (mm)
 
 # Stocking
-STOCKING_COUNT = 18                 # fingerlings stocked in tank (reduced from 20)
+STOCKING_COUNT = 16                 # fingerlings stocked in tank (reduced from 18)
 GROW_OUT_DAYS = 165                 # 5.5 months
 
 # Biofilter — MBBR barrels in series
@@ -94,7 +94,7 @@ AIR_PUMP_Z = 200.0                   # mm mounted height
 # Temperature management
 AMBIENT_TEMP_C = 23.0                # Barbosa average air temp at 1300m ASL
 GREENHOUSE_BOOST_C = 4.0             # greenhouse effect on WATER temp
-INSULATION_BOOST_C = 0.5             # tank insulation (bubble wrap on HDPE — realistic value)
+INSULATION_BOOST_C = 1.0             # tank insulation (increased from 0.5 for better temp)
 DARK_TANK_BOOST_C = 0.3              # black HDPE solar absorption (minimal baseline)
 
 # Pipe dimensions (OD in mm, for CAD rendering)
