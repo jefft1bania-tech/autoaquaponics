@@ -42,7 +42,7 @@ FISH_TANK_CX = 3251.0              # X center position (mm)
 FISH_TANK_CY = 1270.0              # Y center position (mm)
 
 # Stocking
-STOCKING_COUNT = 14                 # fingerlings stocked in tank (reduced from 16)
+STOCKING_COUNT = 12                 # fingerlings stocked in tank (reduced from 14)
 GROW_OUT_DAYS = 165                 # 5.5 months
 
 # Biofilter — MBBR barrels in series
