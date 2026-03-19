@@ -31,7 +31,7 @@ SOUTH_POST_H = 7 * 304.8           # 2133.6mm
 NORTH_POST_H = 9 * 304.8           # 2743.2mm
 
 # Fish Tank — round HDPE cylindrical
-FISH_TANK_DIA = 1117.6              # mm (44" HDPE)
+FISH_TANK_DIA = 1200.0              # mm (increased from 1117.6mm)
 FISH_TANK_H = 762.0                 # mm (30" = 2.5ft)
 FISH_TANK_WALL = 6.0                # mm wall thickness
 FISH_TANK_STAND_H = 450.0           # mm steel tube stand height
@@ -42,7 +42,7 @@ FISH_TANK_CX = 3251.0              # X center position (mm)
 FISH_TANK_CY = 1270.0              # Y center position (mm)
 
 # Stocking
-STOCKING_COUNT = 20                 # fingerlings stocked in tank
+STOCKING_COUNT = 18                 # fingerlings stocked in tank (reduced from 20)
 GROW_OUT_DAYS = 165                 # 5.5 months
 
 # Biofilter — MBBR barrels in series
@@ -73,7 +73,7 @@ SUMP_CY = 1529.0
 SUMP_INLET_Z = 200.0                # mm above grade
 
 # Water Pump
-PUMP_FLOW_LPM = 30.0                 # L/min at operating TDH (LEO ACm75 minimum rated flow; gives 3.6 t/hr = f_turn 1.0)
+PUMP_FLOW_LPM = 32.5                 # L/min adjusted for larger tank (32.5*60/543.1=3.6 t/hr)
 PUMP_POWER_W = 550                   # watts (LEO ACm75 at operating point, 0.75kW rated)
 PUMP_W = 250.0                       # mm body width
 PUMP_D = 180.0                       # mm body depth
