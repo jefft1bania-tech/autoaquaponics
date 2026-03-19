@@ -369,8 +369,9 @@ def main():
             print("First experiment crashed. Check design.py and evaluate.py.")
             sys.exit(1)
 
-        if result["weight"] >= 450:
-            print(f"\n  TARGET REACHED: {result['weight']:.2f}g >= 450g!")
+        target = int(os.environ.get("AUTOAQUAPONICS_TARGET", "450"))
+        if result["weight"] >= target:
+            print(f"\n  TARGET REACHED: {result['weight']:.2f}g >= {target}g!")
             break
 
         # Brief pause between experiments
