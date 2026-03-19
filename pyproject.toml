@@ -1,0 +1,15 @@
+[project]
+name = "autoaquaponics"
+version = "0.1.0"
+description = "Autonomous aquaponics design optimization — AI agent iterates on a parametric CadQuery model to maximize tilapia harvest weight"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=0.40.0",
+    "cadquery>=2.4.0",
+]
+
+[project.optional-dependencies]
+viewer = [
+    "ocp-vscode>=2.0.0",
+]

@@ -1,0 +1,103 @@
+name: Autoaquaponics Optimizer
+
+on:
+  schedule:
+    # Run every hour at minute 0
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub UI
+    inputs:
+      max_experiments:
+        description: 'Number of experiments to run'
+        required: false
+        default: '3'
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install anthropic cadquery
+          # OCP CAD Viewer not needed in CI (headless mode)
+
+      - name: Configure git
+        run: |
+          git config user.name "autoaquaponics-bot"
+          git config user.email "autoaquaponics-bot@users.noreply.github.com"
+
+      - name: Create or checkout experiment branch
+        run: |
+          BRANCH="autoaquaponics/$(date +%Y-%m-%d)"
+          if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
+            git checkout "$BRANCH"
+          elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+            git checkout -b "$BRANCH" "origin/$BRANCH"
+          else
+            git checkout -b "$BRANCH"
+          fi
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
+      - name: Run optimization
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          MAX="${{ github.event.inputs.max_experiments || '3' }}"
+          python optimize.py --max-experiments "$MAX"
+
+      - name: Push results
+        run: |
+          # Push the experiment branch if there are new commits
+          if [ "$(git log origin/${{ env.BRANCH }}..HEAD 2>/dev/null | head -1)" != "" ] || \
+             [ "$(git log origin/main..HEAD 2>/dev/null | head -1)" != "" ]; then
+            git push origin "${{ env.BRANCH }}" --force-with-lease
+          else
+            echo "No new commits to push"
+          fi
+
+      - name: Upload run log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-log-${{ github.run_number }}
+          path: |
+            run.log
+            results.tsv
+          retention-days: 30
+
+      - name: Print summary
+        if: always()
+        run: |
+          echo "## Autoaquaponics Experiment Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f results.tsv ]; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat results.tsv >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No results.tsv found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f run.log ]; then
+            echo "### Last Run Output" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -20 run.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
