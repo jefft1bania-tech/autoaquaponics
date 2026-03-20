@@ -49,7 +49,7 @@ NUM_TANKS = 2                        # number of fish tanks (1, 2, or 3)
 assert NUM_TANKS in (1, 2, 3), "NUM_TANKS must be 1, 2, or 3"
 
 # Stocking
-STOCKING_COUNT = 6                  # fingerlings stocked in tank (reduced from 10)
+STOCKING_COUNT = 5                  # fingerlings stocked in tank (reduced from 6)
 GROW_OUT_DAYS = 165                 # 5.5 months
 
 # Biofilter — MBBR barrels in series
@@ -80,7 +80,7 @@ SUMP_CY = 1529.0
 SUMP_INLET_Z = 200.0                # mm above grade
 
 # Water Pump
-PUMP_FLOW_LPM = 32.0                # L/min optimized for 3.0 turnovers/hr (32*60/632.9=3.0)
+PUMP_FLOW_LPM = 37.0                # L/min optimized for 3.5 turnovers/hr (37*60/632.9=3.5)
 PUMP_POWER_W = 550                   # watts (LEO ACm75 at operating point, 0.75kW rated)
 PUMP_W = 250.0                       # mm body width
 PUMP_D = 180.0                       # mm body depth
@@ -89,7 +89,7 @@ PUMP_CX = 5475.0
 PUMP_CY = 907.0
 
 # Air Pump + Aeration
-AIR_PUMP_FLOW_LPM = 95              # L/min output (increased from 90 for better DO)
+AIR_PUMP_FLOW_LPM = 105              # L/min output (increased from 95 for better DO)
 AIR_PUMP_POWER_W = 75                # watts (95 LPM diaphragm pump)
 AIR_PUMP_W = 200.0
 AIR_PUMP_D = 150.0
