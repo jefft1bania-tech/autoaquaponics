@@ -3,3 +3,4 @@ commit	predicted_weight_g	constraints	status	description
 24efe5b	153.33	pass	keep	baseline
 502b7e9	137.14	pass	discard	reduce stocking to 4 fish; increase tank height to 1000mm; maintain 5 biofilters
 798147c	113.98	pass	discard	larger 1500x1000mm tank; 6 biofilters; 120 LPM air; maintain 5 fish stocking
+7fd5950	265.81	pass	discard	reduce stocking to 3 fish; increase tank diameter to 1350mm; maintain 120 LPM air
