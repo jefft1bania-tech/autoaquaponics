@@ -22,7 +22,7 @@ To set up a new experiment run:
 A closed-loop Recirculating Aquaculture System (RAS) for red tilapia, enclosed in a 25ft x 12ft lean-to greenhouse in Barbosa, Antioquia, Colombia (1,300m ASL).
 
 **Components (fixed set — do not add or remove component types):**
-- 1x round HDPE fish tank (on elevated stand)
+- 1-3x round HDPE fish tanks (on elevated stands, configurable via NUM_TANKS)
 - 1x biofilter system (MBBR barrels with K1 media, in series)
 - 1x sump tank (at grade)
 - 1x water pump (lifts water from sump to fish tank)
@@ -48,6 +48,7 @@ Each experiment modifies `design.py` and evaluates the result.
   - Temperature management (insulation boost, greenhouse parameters)
   - Component positions (within the 25x12ft envelope)
   - Pipe dimensions
+  - Number of tanks (NUM_TANKS: 1, 2, or 3) — shared infrastructure scales automatically
   - Any parameter in the PARAMS dict
 
 **What you CANNOT do:**
@@ -108,6 +109,13 @@ Think about these when proposing changes:
 
 7. **Stand height** — Affects hydraulic grade line. Higher stand = more gravity
    head for biofilter cascade, but pump must push water higher.
+
+8. **Tank count (NUM_TANKS)** — More tanks = more total harvest, but shared
+   infrastructure (pump, biofilter, air) is diluted per-tank. Adding a tank
+   without upgrading pump/biofilter/air will reduce per-tank performance.
+   NUM_TANKS is set by Jeff, not by the AI optimizer. When scaling up, also
+   increase PUMP_FLOW_LPM, BIO_BARREL_COUNT, and AIR_PUMP_FLOW_LPM
+   proportionally.
 
 ## Constraints that MUST pass
 
@@ -191,21 +199,36 @@ LOOP FOREVER:
 - Feed rate: 1.5-5% body weight/day depending on fish size
 - The growth factors multiply — improving multiple factors compounds gains
 
-## Model-to-reality translation (1-tank scoring model → 3-tank real system)
+## Multi-tank scaling (NUM_TANKS parameter)
 
-The scoring model simulates a **single tank** for speed. The real Barbosa system
-has **3× 500L Tankplast tanks** sharing one pump/biofilter/sump. When the AI
-optimizes per-tank parameters, here's how they map to the real system:
+The `NUM_TANKS` parameter (1, 2, or 3) in `design.py` controls how many fish
+tanks share the system's single pump, biofilter, and sump. The scoring model
+(evaluate.py) always simulates **one tank** — design.py automatically divides
+shared resources by NUM_TANKS before passing them to evaluate.py:
 
-| Scoring Model (1-tank) | Real System (3-tank) | Translation Rule |
-|-------------------------|----------------------|------------------|
-| `tank_volume_l = 500` | 3× 500L = 1,500L total | Do NOT set `tank_volume_l = 1500` — the DO model breaks. Keep at 500 (per-tank). |
-| `stocking_count = 20` | 60 fish total (20/tank) | Multiply by 3 for purchasing/stocking. |
-| `pump_flow_lpm = 30` | 30 LPM total, split 3 ways (~10 LPM/tank) | LEO ACm75 serves all 3 tanks via manifold header. |
-| `bio_barrel_count = 3` | Same — 3 barrels serve all 3 tanks | Biofilter sized for total system bioload (3× single-tank). |
-| `air_pump_flow_lpm = 80` | 80 LPM split across 3 tanks + biofilter | 6 airstones total: 1 per tank + 3 in barrels. |
-| `turnovers/hr = 3.6` | Per-tank metric — each tank turns over 3.6×/hr | Validate via flow balancing valves on supply drops. |
+| Parameter in design.py | What evaluate.py sees (PARAMS dict) |
+|------------------------|-------------------------------------|
+| `PUMP_FLOW_LPM` | `PUMP_FLOW_LPM / NUM_TANKS` (per-tank share) |
+| `BIO_BARREL_COUNT` | `BIO_BARREL_COUNT / NUM_TANKS` (per-tank share, float OK) |
+| `AIR_PUMP_FLOW_LPM` | `AIR_PUMP_FLOW_LPM / NUM_TANKS` (per-tank share) |
+| `FISH_TANK_VOLUME_L` | Unchanged (each tank is independent) |
+| `STOCKING_COUNT` | Unchanged (per-tank fish count) |
 
-**Key constraint the AI must respect:** The scoring model's `pump_flow_lpm` is the
-total system flow (not per-tank). The LEO ACm75 at 30 LPM operating point is already
-running at minimum rated flow — don't go lower.
+**System totals** are displayed by design.py after scoring:
+- Total fish: `STOCKING_COUNT × NUM_TANKS`
+- Total harvest: `total_harvest_kg × NUM_TANKS`
+- Total volume: `FISH_TANK_VOLUME_L × NUM_TANKS`
+
+**Scaling up correctly:** When increasing NUM_TANKS, you MUST also increase
+shared infrastructure proportionally to maintain per-tank performance:
+- `PUMP_FLOW_LPM` — multiply by NUM_TANKS (or upgrade to a larger pump)
+- `BIO_BARREL_COUNT` — multiply by NUM_TANKS
+- `AIR_PUMP_FLOW_LPM` — multiply by NUM_TANKS
+
+**CAD layout:** Tanks are placed in a row along the X-axis with 1600mm
+center-to-center spacing. The sump and pump automatically shift east if
+needed to avoid collisions. Supply piping uses a manifold header splitting
+to each tank. Each tank gets its own drain, overflow, and airstone.
+
+**Key constraint:** NUM_TANKS is set by Jeff, not by the AI optimizer.
+The optimizer works within whatever tank count is configured.

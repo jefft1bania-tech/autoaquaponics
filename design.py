@@ -4,8 +4,11 @@ Autoaquaponics design file — THE AGENT MODIFIES THIS FILE.
 Parametric CadQuery model of a closed-loop RAS tilapia system.
 Enclosed in a 25ft x 12ft lean-to roof structure.
 
-Components: 1 HDPE fish tank, 1 biofilter (multi-barrel MBBR),
-            1 sump, 1 water pump, 1 air pump, aeration system.
+Components: 1-3 HDPE fish tanks (configurable via NUM_TANKS),
+            1 biofilter (multi-barrel MBBR), 1 sump, 1 water pump,
+            1 air pump, aeration system. Shared infrastructure scales
+            automatically — pump/biofilter/air are divided per-tank
+            for scoring while the CAD shows the full multi-tank layout.
 
 The PARAMS dict at the bottom is read by evaluate.py to score
 the design. The CadQuery geometry is rendered to OCP CAD Viewer
@@ -38,8 +41,12 @@ FISH_TANK_STAND_H = 450.0           # mm steel tube stand height
 FISH_TANK_VOLUME_L = round(
     math.pi * (FISH_TANK_DIA / 2000) ** 2 * (FISH_TANK_H / 1000) * 1000 * 0.67, 1
 )  # liters (67% practical fill, computed from geometry)
-FISH_TANK_CX = 3251.0              # X center position (mm)
-FISH_TANK_CY = 1270.0              # Y center position (mm)
+FISH_TANK_CX = 3251.0              # X center position (mm) — used for single-tank
+FISH_TANK_CY = 1270.0              # Y center position (mm) — all tanks share this Y
+
+# Multi-Tank Scaling
+NUM_TANKS = 2                        # number of fish tanks (1, 2, or 3)
+assert NUM_TANKS in (1, 2, 3), "NUM_TANKS must be 1, 2, or 3"
 
 # Stocking
 STOCKING_COUNT = 10                 # fingerlings stocked in tank (reduced from 12)
@@ -125,7 +132,28 @@ COLORS = {
 }
 
 # ---------------------------------------------------------------------------
+# Multi-Tank Layout Computation
+# ---------------------------------------------------------------------------
+
+_TANK_SPACING = 1600.0               # mm center-to-center (≥300mm walkway gap)
+if NUM_TANKS == 1:
+    TANK_CXS = [FISH_TANK_CX]
+elif NUM_TANKS == 2:
+    _mid_x = 3000.0
+    TANK_CXS = [_mid_x - _TANK_SPACING / 2, _mid_x + _TANK_SPACING / 2]
+else:  # 3
+    _mid_x = 3000.0
+    TANK_CXS = [_mid_x - _TANK_SPACING, _mid_x, _mid_x + _TANK_SPACING]
+
+# Adjust sump/pump east if rightmost tank encroaches
+_right_clearance = max(TANK_CXS) + FISH_TANK_DIA / 2 + 400
+if _right_clearance + SUMP_L / 2 > SUMP_CX:
+    SUMP_CX = _right_clearance + SUMP_L / 2
+    PUMP_CX = SUMP_CX + 275
+
+# ---------------------------------------------------------------------------
 # PARAMS dict — exported for evaluate.py scoring (DO NOT RENAME)
+# Shared resources are divided by NUM_TANKS so evaluate.py sees per-tank values.
 # ---------------------------------------------------------------------------
 
 PARAMS = {
@@ -137,7 +165,8 @@ PARAMS = {
     "tank_volume_l": FISH_TANK_VOLUME_L,
     "stocking_count": STOCKING_COUNT,
     "grow_out_days": GROW_OUT_DAYS,
-    "bio_barrel_count": BIO_BARREL_COUNT,
+    "num_tanks": NUM_TANKS,
+    "bio_barrel_count": BIO_BARREL_COUNT / NUM_TANKS,    # per-tank share (float OK)
     "bio_barrel_volume_l": BIO_BARREL_VOLUME_L,
     "bio_fill_ratio": BIO_FILL_RATIO,
     "bio_media_surface_m2_per_m3": BIO_MEDIA_SURFACE_M2_M3,
@@ -145,8 +174,8 @@ PARAMS = {
     "bio_stand_h_mm": BIO_STAND_H,
     "bio_h_mm": BIO_H,
     "sump_inlet_z_mm": SUMP_INLET_Z,
-    "pump_flow_lpm": PUMP_FLOW_LPM,
-    "air_pump_flow_lpm": AIR_PUMP_FLOW_LPM,
+    "pump_flow_lpm": PUMP_FLOW_LPM / NUM_TANKS,          # per-tank share
+    "air_pump_flow_lpm": AIR_PUMP_FLOW_LPM / NUM_TANKS,   # per-tank share
     "ambient_temp_c": AMBIENT_TEMP_C,
     "greenhouse_boost_c": GREENHOUSE_BOOST_C,       # baseline: 1.5
     "insulation_boost_c": INSULATION_BOOST_C,       # baseline: 0.0
@@ -322,33 +351,37 @@ roof_panel = (cq.Workplane("XY")
               .box(LENGTH + 2*ROOF_OVERHANG, rafter_total_len, POLY_THICK,
                    centered=(True, False, False)))
 
-# --- Fish Tank + Stand ---
+# --- Fish Tank(s) + Stand(s) ---
+FISH_TANK_RIM_Z = FISH_TANK_STAND_H + FISH_TANK_H
 stand_size = 1200.0
 tube_sec = 40.0
-stand_parts = []
-for ox, oy in [(-stand_size/2+tube_sec/2, -stand_size/2+tube_sec/2),
-               (stand_size/2-tube_sec/2, -stand_size/2+tube_sec/2),
-               (stand_size/2-tube_sec/2, stand_size/2-tube_sec/2),
-               (-stand_size/2+tube_sec/2, stand_size/2-tube_sec/2)]:
-    stand_parts.append(make_box_at(FISH_TANK_CX+ox, FISH_TANK_CY+oy, 0, tube_sec, tube_sec, FISH_TANK_STAND_H))
-for i in range(4):
-    corners = [(-stand_size/2,-stand_size/2),(stand_size/2,-stand_size/2),
-               (stand_size/2,stand_size/2),(-stand_size/2,stand_size/2)]
-    c1, c2 = corners[i], corners[(i+1)%4]
-    mx = FISH_TANK_CX + (c1[0]+c2[0])/2
-    my = FISH_TANK_CY + (c1[1]+c2[1])/2
-    sx = abs(c2[0]-c1[0]) if abs(c2[0]-c1[0]) > 1 else tube_sec
-    sy = abs(c2[1]-c1[1]) if abs(c2[1]-c1[1]) > 1 else tube_sec
-    stand_parts.append(make_box_at(mx, my, FISH_TANK_STAND_H-tube_sec, sx, sy, tube_sec))
-stand_parts.append(make_box_at(FISH_TANK_CX, FISH_TANK_CY, FISH_TANK_STAND_H-tube_sec, stand_size, tube_sec, tube_sec))
-stand_parts.append(make_box_at(FISH_TANK_CX, FISH_TANK_CY, FISH_TANK_STAND_H-tube_sec, tube_sec, stand_size, tube_sec))
-tank_stand = stand_parts[0]
-for s in stand_parts[1:]:
-    tank_stand = tank_stand.union(s)
-tank_body = make_hollow_cylinder(FISH_TANK_CX, FISH_TANK_CY, FISH_TANK_STAND_H,
-                                 FISH_TANK_DIA, FISH_TANK_H, FISH_TANK_WALL)
-fish_tank_asm = tank_stand.union(tank_body)
-FISH_TANK_RIM_Z = FISH_TANK_STAND_H + FISH_TANK_H
+fish_tank_asm = None
+
+for tcx in TANK_CXS:
+    stand_parts = []
+    for ox, oy in [(-stand_size/2+tube_sec/2, -stand_size/2+tube_sec/2),
+                   (stand_size/2-tube_sec/2, -stand_size/2+tube_sec/2),
+                   (stand_size/2-tube_sec/2, stand_size/2-tube_sec/2),
+                   (-stand_size/2+tube_sec/2, stand_size/2-tube_sec/2)]:
+        stand_parts.append(make_box_at(tcx+ox, FISH_TANK_CY+oy, 0, tube_sec, tube_sec, FISH_TANK_STAND_H))
+    for i in range(4):
+        corners = [(-stand_size/2,-stand_size/2),(stand_size/2,-stand_size/2),
+                   (stand_size/2,stand_size/2),(-stand_size/2,stand_size/2)]
+        c1, c2 = corners[i], corners[(i+1)%4]
+        mx = tcx + (c1[0]+c2[0])/2
+        my = FISH_TANK_CY + (c1[1]+c2[1])/2
+        sx = abs(c2[0]-c1[0]) if abs(c2[0]-c1[0]) > 1 else tube_sec
+        sy = abs(c2[1]-c1[1]) if abs(c2[1]-c1[1]) > 1 else tube_sec
+        stand_parts.append(make_box_at(mx, my, FISH_TANK_STAND_H-tube_sec, sx, sy, tube_sec))
+    stand_parts.append(make_box_at(tcx, FISH_TANK_CY, FISH_TANK_STAND_H-tube_sec, stand_size, tube_sec, tube_sec))
+    stand_parts.append(make_box_at(tcx, FISH_TANK_CY, FISH_TANK_STAND_H-tube_sec, tube_sec, stand_size, tube_sec))
+    tank_stand = stand_parts[0]
+    for s in stand_parts[1:]:
+        tank_stand = tank_stand.union(s)
+    tank_body = make_hollow_cylinder(tcx, FISH_TANK_CY, FISH_TANK_STAND_H,
+                                     FISH_TANK_DIA, FISH_TANK_H, FISH_TANK_WALL)
+    single_tank = tank_stand.union(tank_body)
+    fish_tank_asm = single_tank if fish_tank_asm is None else fish_tank_asm.union(single_tank)
 
 # --- Biofilter (MBBR barrels + stand) ---
 bio_cxs = [BIO1_CX + i * BIO_SPACING for i in range(BIO_BARREL_COUNT)]
@@ -392,22 +425,41 @@ sump_tank = sump_outer.cut(sump_inner)
 # --- Water Pump ---
 pump_body = make_box_at(PUMP_CX, PUMP_CY, 0, PUMP_W, PUMP_D, PUMP_H)
 
-# --- Supply Plumbing (Pump -> Fish Tank) ---
-supply_pts = [
+# --- Supply Plumbing (Pump -> Fish Tank(s) via manifold) ---
+_manifold_z = FISH_TANK_RIM_Z + 100
+_manifold_y = FISH_TANK_CY
+supply_parts = []
+# Vertical riser from pump to manifold height
+riser_pts = [
     (PUMP_CX, PUMP_CY, PUMP_H),
-    (PUMP_CX, PUMP_CY, FISH_TANK_RIM_Z + 100),
-    (FISH_TANK_CX + FISH_TANK_DIA/3, FISH_TANK_CY, FISH_TANK_RIM_Z + 100),
-    (FISH_TANK_CX + FISH_TANK_DIA/3, FISH_TANK_CY, FISH_TANK_RIM_Z),
+    (PUMP_CX, PUMP_CY, _manifold_z),
+    (PUMP_CX, _manifold_y, _manifold_z),
 ]
-supply_pipe = make_pipe_run(supply_pts, SUPPLY_OD)
+supply_parts.append(make_pipe_run(riser_pts, SUPPLY_OD))
+# Branch from manifold to each tank
+for tcx in TANK_CXS:
+    branch_pts = [
+        (PUMP_CX, _manifold_y, _manifold_z),
+        (tcx + FISH_TANK_DIA/3, _manifold_y, _manifold_z),
+        (tcx + FISH_TANK_DIA/3, _manifold_y, FISH_TANK_RIM_Z),
+    ]
+    supply_parts.append(make_pipe_run(branch_pts, SUPPLY_OD))
+supply_pipe = supply_parts[0]
+for sp in supply_parts[1:]:
+    supply_pipe = supply_pipe.union(sp)
 
-# --- Drain Plumbing (Fish Tank -> Biofilter) ---
-drain_pts = [
-    (FISH_TANK_CX - FISH_TANK_DIA/2 - 30, FISH_TANK_CY, FISH_TANK_STAND_H + 100),
-    (FISH_TANK_CX - FISH_TANK_DIA/2 - 200, FISH_TANK_CY, FISH_TANK_STAND_H + 100),
-    (bio_cxs[0], BIO_CY, BIO_INLET_Z),
-]
-drain_pipe = make_pipe_run(drain_pts, DRAIN_OD)
+# --- Drain Plumbing (Fish Tank(s) -> Biofilter) ---
+drain_parts = []
+for tcx in TANK_CXS:
+    drain_pts = [
+        (tcx - FISH_TANK_DIA/2 - 30, FISH_TANK_CY, FISH_TANK_STAND_H + 100),
+        (tcx - FISH_TANK_DIA/2 - 200, FISH_TANK_CY, FISH_TANK_STAND_H + 100),
+        (bio_cxs[0], BIO_CY, BIO_INLET_Z),
+    ]
+    drain_parts.append(make_pipe_run(drain_pts, DRAIN_OD))
+drain_pipe = drain_parts[0]
+for dp in drain_parts[1:]:
+    drain_pipe = drain_pipe.union(dp)
 
 # --- Inter-barrel Plumbing ---
 barrel_pipe_parts = []
@@ -426,22 +478,29 @@ barrel_pipe_asm = barrel_pipe_parts[0]
 for bp in barrel_pipe_parts[1:]:
     barrel_pipe_asm = barrel_pipe_asm.union(bp)
 
-# --- Overflow (Emergency) ---
-overflow_pts = [
-    (FISH_TANK_CX+FISH_TANK_DIA/2+30, FISH_TANK_CY, FISH_TANK_RIM_Z-50),
-    (FISH_TANK_CX+FISH_TANK_DIA/2+200, FISH_TANK_CY, FISH_TANK_RIM_Z-50),
-    (SUMP_CX, SUMP_CY, SUMP_D-50),
-]
-overflow_pipe = make_pipe_run(overflow_pts, OVERFLOW_OD)
+# --- Overflow (Emergency) — one per tank ---
+overflow_parts = []
+for tcx in TANK_CXS:
+    overflow_pts = [
+        (tcx+FISH_TANK_DIA/2+30, FISH_TANK_CY, FISH_TANK_RIM_Z-50),
+        (tcx+FISH_TANK_DIA/2+200, FISH_TANK_CY, FISH_TANK_RIM_Z-50),
+        (SUMP_CX, SUMP_CY, SUMP_D-50),
+    ]
+    overflow_parts.append(make_pipe_run(overflow_pts, OVERFLOW_OD))
+overflow_pipe = overflow_parts[0]
+for op in overflow_parts[1:]:
+    overflow_pipe = overflow_pipe.union(op)
 
 # --- Aeration ---
 air_pump = make_box_at(AIR_PUMP_CX, AIR_PUMP_CY, AIR_PUMP_Z, AIR_PUMP_W, AIR_PUMP_D, AIR_PUMP_H)
 airstone_positions = [(bcx, BIO_CY, BIO_STAND_H+20) for bcx in bio_cxs]
-airstone_positions.append((FISH_TANK_CX, FISH_TANK_CY, FISH_TANK_STAND_H+20))
+for tcx in TANK_CXS:
+    airstone_positions.append((tcx, FISH_TANK_CY, FISH_TANK_STAND_H+20))
 airstone_parts = [make_cylinder_at(x, y, z, 25, 20) for x, y, z in airstone_positions]
 
 airline_targets = [(bcx, BIO_CY, BIO_STAND_H+BIO_H+20) for bcx in bio_cxs]
-airline_targets.append((FISH_TANK_CX, FISH_TANK_CY, FISH_TANK_RIM_Z+20))
+for tcx in TANK_CXS:
+    airline_targets.append((tcx, FISH_TANK_CY, FISH_TANK_RIM_Z+20))
 air_top = AIR_PUMP_Z + AIR_PUMP_H
 manifold_z = air_top + 50
 airline_parts = []
@@ -464,7 +523,7 @@ for line in airline_parts:
 from evaluate import score_design
 result = score_design(PARAMS, verbose=("--verbose" in sys.argv))
 
-print("\n---")
+print(f"\n--- PER-TANK METRICS (1 of {NUM_TANKS} tank{'s' if NUM_TANKS > 1 else ''}) ---")
 print(f"predicted_weight_g:     {result['predicted_weight_g']:.2f}")
 print(f"total_harvest_kg:       {result['total_harvest_kg']:.2f}")
 print(f"surviving_fish:         {result['surviving_fish']}")
@@ -478,6 +537,20 @@ if result["constraint_issues"]:
     for issue in result["constraint_issues"]:
         print(f"  CONSTRAINT FAIL: {issue}")
 
+if NUM_TANKS > 1:
+    _sys_fish = result['surviving_fish'] * NUM_TANKS
+    _sys_harvest = result['total_harvest_kg'] * NUM_TANKS
+    _sys_stocked = STOCKING_COUNT * NUM_TANKS
+    print(f"\n--- SYSTEM TOTALS ({NUM_TANKS} tanks) ---")
+    print(f"num_tanks:              {NUM_TANKS}")
+    print(f"total_fish_stocked:     {_sys_stocked}")
+    print(f"total_surviving_fish:   {_sys_fish}")
+    print(f"total_system_harvest_kg:{_sys_harvest:.2f}")
+    print(f"total_water_volume_l:   {FISH_TANK_VOLUME_L * NUM_TANKS:.0f}")
+    print(f"pump_flow_total_lpm:    {PUMP_FLOW_LPM}")
+    print(f"bio_barrels_total:      {BIO_BARREL_COUNT}")
+    print(f"air_flow_total_lpm:     {AIR_PUMP_FLOW_LPM}")
+
 # ═══════════════════════════════════════════════════
 # RENDER (OCP CAD Viewer or STEP export)
 # ═══════════════════════════════════════════════════
@@ -489,7 +562,7 @@ if "--render" in sys.argv:
     show_object(framing_asm, name="1b-FRAMING (plates+rafters)", options={"color": hex_to_rgb(COLORS["wood"])})
     show_object(purlins_asm, name="1c-PURLINS (2x4 @24in OC)", options={"color": hex_to_rgb(COLORS["wood"]), "alpha": 0.9})
     show_object(roof_panel, name="1d-ROOF (polycarbonate)", options={"color": hex_to_rgb(COLORS["polycarbonate"]), "alpha": 0.35})
-    show_object(fish_tank_asm, name="2-FISH TANK (HDPE+stand)", options={"color": hex_to_rgb(COLORS["fish_tank"]), "alpha": 0.9})
+    show_object(fish_tank_asm, name=f"2-FISH TANK x{NUM_TANKS} (HDPE+stand)", options={"color": hex_to_rgb(COLORS["fish_tank"]), "alpha": 0.9})
     show_object(biofilter_asm, name="3-BIOFILTER (MBBR barrels)", options={"color": hex_to_rgb(COLORS["biofilter"]), "alpha": 0.9})
     show_object(sump_tank, name="4-SUMP TANK", options={"color": hex_to_rgb(COLORS["sump"]), "alpha": 0.9})
     show_object(pump_body, name="5-PUMP", options={"color": hex_to_rgb(COLORS["pump"])})
