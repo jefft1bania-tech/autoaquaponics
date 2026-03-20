@@ -49,7 +49,7 @@ NUM_TANKS = 2                        # number of fish tanks (1, 2, or 3)
 assert NUM_TANKS in (1, 2, 3), "NUM_TANKS must be 1, 2, or 3"
 
 # Stocking
-STOCKING_COUNT = 5                  # fingerlings stocked in tank (reduced from 6)
+STOCKING_COUNT = 4                  # fingerlings stocked in tank (reduced from 5)
 GROW_OUT_DAYS = 165                 # 5.5 months
 
 # Biofilter — MBBR barrels in series
@@ -89,8 +89,8 @@ PUMP_CX = 5475.0
 PUMP_CY = 907.0
 
 # Air Pump + Aeration
-AIR_PUMP_FLOW_LPM = 105              # L/min output (increased from 95 for better DO)
-AIR_PUMP_POWER_W = 75                # watts (95 LPM diaphragm pump)
+AIR_PUMP_FLOW_LPM = 120              # L/min output (increased from 105 for better DO)
+AIR_PUMP_POWER_W = 90                # watts (120 LPM diaphragm pump)
 AIR_PUMP_W = 200.0
 AIR_PUMP_D = 150.0
 AIR_PUMP_H = 150.0
