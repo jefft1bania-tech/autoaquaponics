@@ -49,11 +49,11 @@ NUM_TANKS = 2                        # number of fish tanks (1, 2, or 3)
 assert NUM_TANKS in (1, 2, 3), "NUM_TANKS must be 1, 2, or 3"
 
 # Stocking
-STOCKING_COUNT = 10                 # fingerlings stocked in tank (reduced from 12)
+STOCKING_COUNT = 6                  # fingerlings stocked in tank (reduced from 10)
 GROW_OUT_DAYS = 165                 # 5.5 months
 
 # Biofilter — MBBR barrels in series
-BIO_BARREL_COUNT = 4                # number of 55-gal MBBR barrels (increased from 3)
+BIO_BARREL_COUNT = 5                # number of 55-gal MBBR barrels (increased from 4)
 BIO_DIA = 585.0                     # mm barrel outer diameter
 BIO_H = 880.0                       # mm barrel height
 BIO_WALL = 4.0                      # mm barrel wall thickness
@@ -80,7 +80,7 @@ SUMP_CY = 1529.0
 SUMP_INLET_Z = 200.0                # mm above grade
 
 # Water Pump
-PUMP_FLOW_LPM = 35.0                 # L/min adjusted for larger tank (35*60/632.9=3.3 t/hr)
+PUMP_FLOW_LPM = 32.0                # L/min optimized for 3.0 turnovers/hr (32*60/632.9=3.0)
 PUMP_POWER_W = 550                   # watts (LEO ACm75 at operating point, 0.75kW rated)
 PUMP_W = 250.0                       # mm body width
 PUMP_D = 180.0                       # mm body depth
@@ -390,6 +390,8 @@ if BIO_BARREL_COUNT <= 3:
     bio_cxs = [BIO1_CX, BIO2_CX, BIO3_CX][:BIO_BARREL_COUNT]
 elif BIO_BARREL_COUNT == 4:
     bio_cxs = [BIO1_CX, BIO2_CX, BIO3_CX, BIO3_CX + BIO_SPACING]
+elif BIO_BARREL_COUNT == 5:
+    bio_cxs = [BIO1_CX, BIO2_CX, BIO3_CX, BIO3_CX + BIO_SPACING, BIO3_CX + 2*BIO_SPACING]
 bio_platform_l = (bio_cxs[-1] - bio_cxs[0] + BIO_DIA + 200) if len(bio_cxs) > 1 else BIO_DIA + 200
 bio_platform_cx = (bio_cxs[0] + bio_cxs[-1]) / 2 if len(bio_cxs) > 1 else bio_cxs[0]
 
