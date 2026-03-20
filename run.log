@@ -1,0 +1,11 @@
+
+---
+predicted_weight_g:     153.33
+total_harvest_kg:       1.38
+surviving_fish:         9
+final_density_kg_m3:    1.7
+effective_temp_c:       28.3
+effective_do_mg_l:      3.3
+biofilter_cap_g_day:    62.5
+turnovers_per_hour:     1.3
+constraints_pass:       True
