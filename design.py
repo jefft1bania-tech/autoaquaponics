@@ -53,7 +53,7 @@ STOCKING_COUNT = 10                 # fingerlings stocked in tank (reduced from 
 GROW_OUT_DAYS = 165                 # 5.5 months
 
 # Biofilter — MBBR barrels in series
-BIO_BARREL_COUNT = 4                # number of 55-gal MBBR barrels (increased from 3)
+BIO_BARREL_COUNT = 6                # number of 55-gal MBBR barrels (3 per tank for 2-tank setup)
 BIO_DIA = 585.0                     # mm barrel outer diameter
 BIO_H = 880.0                       # mm barrel height
 BIO_WALL = 4.0                      # mm barrel wall thickness
@@ -80,7 +80,7 @@ SUMP_CY = 1529.0
 SUMP_INLET_Z = 200.0                # mm above grade
 
 # Water Pump
-PUMP_FLOW_LPM = 35.0                 # L/min adjusted for larger tank (35*60/632.9=3.3 t/hr)
+PUMP_FLOW_LPM = 80.0                 # L/min (80/2=40 per tank, 40*60/800=3.0 t/hr optimal)
 PUMP_POWER_W = 550                   # watts (LEO ACm75 at operating point, 0.75kW rated)
 PUMP_W = 250.0                       # mm body width
 PUMP_D = 180.0                       # mm body depth
@@ -89,8 +89,8 @@ PUMP_CX = 5475.0
 PUMP_CY = 907.0
 
 # Air Pump + Aeration
-AIR_PUMP_FLOW_LPM = 95              # L/min output (increased from 90 for better DO)
-AIR_PUMP_POWER_W = 75                # watts (95 LPM diaphragm pump)
+AIR_PUMP_FLOW_LPM = 200              # L/min output (dual diaphragm pump for 2 tanks)
+AIR_PUMP_POWER_W = 140               # watts (200 LPM diaphragm pump)
 AIR_PUMP_W = 200.0
 AIR_PUMP_D = 150.0
 AIR_PUMP_H = 150.0
