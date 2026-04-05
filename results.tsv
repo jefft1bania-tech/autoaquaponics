@@ -1,2 +1,3 @@
 commit	predicted_weight_g	constraints	status	description
 24efe5b	153.33	pass	keep	baseline: 2 tanks, 10 fish, 95 LPM air, 35 LPM pump
+976205e	491.26	pass	keep	boost air 200 LPM, pump 80 LPM, bio 6 barrels — all factors 1.0
