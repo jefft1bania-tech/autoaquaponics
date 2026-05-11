@@ -1,9 +1,11 @@
 name: Autoaquaponics Optimizer
 
 on:
-  schedule:
-    # Run every hour at minute 0
-    - cron: '0 * * * *'
+  # DISABLED 2026-05-11 to stop hourly token burn (~1.9–3.6M tokens/week per
+  # Token_Consumption_Audit_v1_2026-05-11.md). Manual workflow_dispatch retained.
+  # To re-enable, uncomment the schedule block below.
+  # schedule:
+  #   - cron: '0 * * * *'
   workflow_dispatch:
     # Allow manual trigger from GitHub UI
     inputs:
